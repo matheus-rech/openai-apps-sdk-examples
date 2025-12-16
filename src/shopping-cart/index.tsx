@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import { useOpenAiGlobal } from "../use-openai-global";
 import { useWidgetState } from "../use-widget-state";
@@ -19,6 +19,37 @@ type CartWidgetState = {
 const createDefaultCartState = (): CartWidgetState => ({
   items: [],
 });
+
+function usePrettyJson(value: unknown): string {
+  return useMemo(() => {
+    if (value === undefined || value === null) {
+      return "null";
+    }
+
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch (error) {
+      return `<<unable to render: ${error}>>`;
+    }
+  }, [value]);
+}
+
+function JsonPanel({ label, value }: { label: string; value: unknown }) {
+  const pretty = usePrettyJson(value);
+
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+      <header className="mb-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">
+          {label}
+        </p>
+      </header>
+      <pre className="max-h-64 overflow-auto rounded-xl bg-white p-3 font-mono text-xs text-slate-600 shadow-sm">
+        {pretty}
+      </pre>
+    </section>
+  );
+}
 
 const suggestedItems = [
   {
@@ -336,6 +367,19 @@ function App() {
             </button>
           </section>
         </div>
+
+        <section className="space-y-3">
+          <header className="flex items-center justify-between">
+            <p className="text-sm font-semibold uppercase tracking-widest text-slate-500">
+              Widget state & output
+            </p>
+            <span className="text-xs text-slate-400">Debug view</span>
+          </header>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <JsonPanel label="window.openai.widgetState" value={cartState} />
+            <JsonPanel label="window.openai.toolOutput" value={toolOutput} />
+          </div>
+        </section>
       </div>
     </div>
   );
